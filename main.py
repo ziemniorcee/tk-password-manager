@@ -2,8 +2,11 @@ from tkinter import *
 from tkinter import messagebox
 import random
 import pyperclip
+import json
 
-letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
+letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
+           'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R',
+           'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
 numbers = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
 symbols = ['!', '#', '$', '%', '&', '(', ')', '*', '+']
 
@@ -32,18 +35,51 @@ def write_to_file():
     email_ent = entry2.get()
     password = entry3.get()
 
-    if len(web_ent) == 0 or email_ent == "" or password == "":
-        messagebox.showinfo(title="Oops", message="more data")
+    new_data = {
+        web_ent: {
+            "email": email_ent,
+            "password": password,
+        }
+    }
 
+    if len(web_ent) == 0 or password == "":
+        messagebox.showinfo(title="Oops", message="more data")
     else:
-        is_ok = messagebox.askokcancel(title=web_ent, message=f"These are the details entered:\nEmail: {email_ent}"
-                                                              f"\nPassword: {password}\nIs it ok to save?")
-        if is_ok:
-            f = open("data.txt", "a")
-            f.write(f"{web_ent} | {email_ent} | {password}\n")
-            f.close()
-            entry1.delete(0, END)
-            entry3.delete(0, END)
+        try:
+            with open("data.json", "r") as data_file:
+                # Reading old data
+
+                data = json.load(data_file)
+                # Update old data with new data
+                data.update(new_data)
+        except FileNotFoundError:
+            with open("data.json", "w") as data_file:
+                # Saving updated data
+                json.dump(new_data, data_file, indent=4)
+        else:
+            with open("data.json", "w") as data_file:
+                # Saving updated data
+                json.dump(data, data_file, indent=4)
+
+        entry1.delete(0, END)
+        entry3.delete(0, END)
+
+
+# ---------------------------- SEARCH ------------------------------- #
+def search():
+    web_ent = entry1.get()
+
+    try:
+        with open("data.json", "r") as data_file:
+            data = json.load(data_file)
+            if web_ent in data:
+                email = data[web_ent]["email"]
+                password = data[web_ent]["password"]
+                messagebox.showinfo(title=web_ent, message=f"Email: {email}\nPassword: {password}")
+            else:
+                messagebox.showinfo(title=web_ent, message="There is no site saved like that")
+    except FileNotFoundError:
+        messagebox.showinfo(title="error", message="There is no data file found")
 
 
 # ---------------------------- UI SETUP ------------------------------- #
@@ -59,9 +95,12 @@ canvas.grid(column=1, row=0)
 label_website = Label(text="Website:")
 label_website.grid(column=0, row=1)
 
-entry1 = Entry(window, width=60)
-entry1.grid(column=1, row=1, columnspan=2)
+entry1 = Entry(window, width=42)
+entry1.grid(column=1, row=1)
 entry1.focus()
+
+generate_button = Button(text="SEARCH", command=search, width=14)
+generate_button.grid(column=2, row=1)
 
 label_emus = Label(text="Email/Username:")
 label_emus.grid(column=0, row=2)
